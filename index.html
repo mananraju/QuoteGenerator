@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Quote Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" type="text/css"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+
+</head>
+
+<body>
+    <video autoplay loop muted plays-inline class="background">
+        <source src="OCEAN LOOP.mp4" type="video/mp4">
+    </video>
+
+    <div id="quote-container">
+        <header>Quote Of The Day!</header>
+        <div class="content">
+
+            <div class="area">
+                <i class="fa-solid fa-quote-left"></i>
+                <p id="quote-text">It’s okay to be confused. Confusion is the route to all the clarity in the world.</p>
+                <i class="fa-solid fa-quote-right"></i>
+            </div>
+
+
+            <div class="author">
+                <span id="quote-author">Mr.Rana</span>
+            </div>
+
+        </div>
+
+        <div class="btn">
+            <div class="feature">
+                <ul type="none">
+                    <li id="voice"><i class="fa fa-volume-up" aria-hidden="true"></i></li>
+                    <li id="copy"><i class="fa-solid fa-copy"></i></li>
+                </ul>
+                <button id="generate-btn">New Quote</button>
+            </div>
+        </div>
+
+    </div>
+
+
+    <script type="module">
+
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import {
+            getDatabase,
+            ref,
+            set,
+            get,
+            child,
+        } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
+
+        // Replace YOUR_FIREBASE_CONFIG with your actual Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyCqLd09tpuIZqTpZoqJ3wRqK50cQuuQymM",
+            authDomain: "quotegeneration-mr.firebaseapp.com",
+            databaseURL: "https://quotegeneration-mr-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "quotegeneration-mr",
+            storageBucket: "quotegeneration-mr.appspot.com",
+            messagingSenderId: "1026141079961",
+            appId: "1:1026141079961:web:1fc12a2af4f2f8080beb08"
+        };
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+
+        // Get a reference to the database service
+        const db = getDatabase(app);
+        const dbRef = ref(getDatabase(app));
+
+        //show firebase data on the web interface
+        document.getElementById('generate-btn').addEventListener('click', () => {
+            const quoteText = document.getElementById('quote-text');
+            const quoteAuthor = document.getElementById('quote-author');
+            const quote = document.getElementById('quote-container');
+            quoteText.innerHTML = '';
+            quoteAuthor.innerHTML = '';
+        });
+        document.getElementById('generate-btn').addEventListener('click', () => {
+            const quoteText = document.getElementById('quote-text');
+            const quoteAuthor = document.getElementById('quote-author');
+
+            getNewQuote().then((quote) => {
+                // Update the quoteText and quoteAuthor elements with the retrieved data
+                if (quote) {
+                    quoteText.textContent = `${quote.quote}`;
+                    quoteAuthor.textContent = `- ${quote.author}`;
+                } else {
+                    quoteText.textContent = "No quotes found.";
+                    quoteAuthor.textContent = "";
+                }
+            }).catch((error) => {
+                console.error(error);
+            });
+        });
+
+        // fetch the data from the firebase database
+        function getNewQuote() {
+            return new Promise((resolve, reject) => {
+                // Assuming 'quotes' is the collection name in the Firebase database
+                get(child(dbRef, 'quotes/')).then((snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        // Randomly select a quote from the data (assuming data is an object with key-value pairs)
+                        const keys = Object.keys(data);
+                        const randomKey = keys[Math.floor(Math.random() * keys.length)];
+                        const quote = data[randomKey];
+                        resolve(quote);
+                    } else {
+                        resolve(null);
+                    }
+                }).catch((error) => {
+                    reject(error);
+                });
+            });
+        }
+
+
+        //copy button 
+        document.getElementById('copy').addEventListener('click', () => {
+            const quoteText = document.getElementById('quote-text').textContent;
+            if (quoteText) {
+                // Copy the quote text to the clipboard
+                copyToClipboard(quoteText);
+            }
+        });
+
+        function copyToClipboard(text) {
+            const tempInput = document.createElement('input');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+        }
+
+        //voice button
+        document.getElementById('voice').addEventListener('click', () => {
+            const quoteText = document.getElementById('quote-text').textContent;
+            if (quoteText) {
+                // Speak the quote using text-to-speech
+                speakText(quoteText);
+            }
+        });
+
+        //Function to speak text using SpeechSynthesis API
+        function speakText(text) {
+            const speechSynthesis = window.speechSynthesis;
+            if (speechSynthesis) {
+                const speechUtterance = new SpeechSynthesisUtterance(text);
+                speechSynthesis.speak(speechUtterance);
+            } else {
+                alert("Your browser does not support speech synthesis.");
+            }
+        }
+
+        //TIMER
+        getNewQuote();
+        setInterval(() => {
+            document.getElementById('generate-btn').click();
+        }, 24*60*60*1000);
+    </script>
+
+</body>
+
+</html>
